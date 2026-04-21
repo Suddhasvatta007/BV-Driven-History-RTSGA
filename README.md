@@ -1,95 +1,131 @@
 # BV-Driven-History-RTSGA
 
-This repository contains the datasets, code/implementation, and result artefacts (selection histories and visualizations)
+This repository contains the datasets, code, and result artefacts for a **Business-Value-Driven, History-Aware Regression Test Selection** study using a Genetic Algorithm (RTSGA).
+
+The core idea: frame regression test selection as a Set Union Knapsack Problem (SUKP) and solve it with a GA that is optionally guided by past selection history and starvation penalties to improve requirement diversity across cycles.
+
+---
 
 ## Repository Structure
 
 ```text
 .
 ├── Data/
-│   ├── mapped-dataset-124-40-defaultJS.xlsx   # Mapped dataset for the 124-40 instance
-│   └── mapped-dataset-248-80-defaultJS.xlsx   # Mapped dataset for the 248-80 instance
-├── Hist-RTSGA/
-│   └── Hist-RTSGA.ipynb                       # Notebook to generate / inspect RTSGA selection histories (history-aware)
+│   ├── mapped-dataset-36-20.xlsx    # Small dataset (D2 => 36 requirements, 20 tests)
+│   └── mapped-dataset-248-80.xlsx   # Large dataset (D1 => 248 requirements, 80 tests)
+│
 ├── RTSGA/
-│   ├── RTSGA Code.ipynb                       # Core RTSGA implementation and experiment runner (non-history-aware)
-│   └── Summary_Statistics_RTSGA.ipynb         # Summary statistics pipeline (generates summary_statistics_RTW files)
+│   ├── RTSGA Code.ipynb             # GA experiment runner — single-budget, multi-run
+│   ├── Summary_Statistics_RTSGA.ipynb  # Generates the RTSGA baseline summary file
+│   ├── summary_statistics_RTSGA_only_RTW_10%.xlsx  # Pre-computed RTSGA baseline
+│   └── Algo.png                     # Algorithm diagram
+│
+├── Hist-RTSGA/
+│   ├── Hist_RTSGA.ipynb             # History-aware GA with starvation sensitivity sweep
+│   └── New_Reqs_Per_Cycle.ipynb     # Post-processing: new requirements per cycle table
+│
 ├── Results/
-│   ├── 124-40_SelectionHist.xlsx              # Selection history for 124-40
-│   ├── 248-80_SelectionHist.xlsx              # Selection history for 248-80
-│   ├── BV,Req,Test Viz-124-40.pdf             # Combined BV/requirements/test visualizations for 124-40
-│   ├── BV,Req,Test Viz-248-80.pdf             # Combined BV/requirements/test visualizations for 248-80
-│   └── summary_statistics_RTW_*               # (Generated) aggregated summary files used by analysis notebooks
-└── README.md                                  # Project documentation (this file)
+│   ├── 36-20_SelectionHistory.xlsx  # Per-cycle selections for the 36-20 dataset
+│   ├── 248-80_SelectionHistory.xlsx # Per-cycle selections for the 248-80 dataset
+│   ├── BV,Req,Test Cov-36-20.pdf    # BV / coverage visualisations for the 36-20 dataset
+│   └── BV,Req,Test Cov-248-80.pdf   # BV / coverage visualisations for the 248-80 dataset
+│
+├── .gitignore
+└── README.md
 ```
 
-## Directory Descriptions
-
-- `Data/`  
-  Contains the two mapped datasets used in all experiments:
-  - `mapped-dataset-124-40-defaultJS.xlsx`
-  - `mapped-dataset-248-80-defaultJS.xlsx`  
-
-- `Hist-RTSGA/`  
-  Contains the notebook implementing the **history-aware, business-value-driven Regression Test Selection (RTS)** approach:
-  - `Hist-RTSGA.ipynb` – uses past selection history to bias the search and balance business value with starvation control over cycles.
-
-- `RTSGA/`  
-  Contains notebooks for running the RTS algorithms and producing summary statistics:
-  - `RTSGA Code.ipynb` – formulates RTS as a Set Union Knapsack Problem (SUKP) and applies the RTSGA algorithm without using historical cycles.
-  - `Summary_Statistics_RTSGA.ipynb` – summary statistics pipeline that reads selection histories (from RTSGA / Hist-RTSGA / BCPSO runs), computes cycle-level aggregated metrics, and writes out "summary_statistics_RTW" files that downstream notebooks and visualization scripts consume. This notebook is intended for post-processing selection history outputs and producing consolidated inputs for plotting and comparative analysis (works with RTSGA, Hist-RTSGA, and BCPSO outputs).
-
-- `Results/`  
-  Stores the outputs of the RTSGA runs for both datasets:
-  - `124-40_SelectionHist.xlsx` – RTSGA selections over *K* cycles for the 124-40 dataset.  
-  - `248-80_SelectionHist.xlsx` – RTSGA selections over *K* cycles for the 248-80 dataset.  
-  - `BV,Req,Test Viz-124-40.pdf` – Plots of business value, requirement coverage, and test coverage for multiple combinations of **BV-tolerance** and **starvation-weight** (124-40 dataset).  
-  - `BV,Req,Test Viz-248-80.pdf` – Same set of plots for the 248-80 dataset.
-  - `summary_statistics_RTW_*` – Aggregated summary files produced by `Summary_Statistics_RTSGA.ipynb`. These are used by analysis/plotting code and combine per-cycle metrics across experiments (format may be CSV/XLSX depending on notebook settings).
+> **Generated directories** (created when notebooks are run, excluded from version control):
+> `Checkpoints/`, `History_Tables/`, `Statistics/`, `Comparison_Plots/`
 
 ---
 
-## Workflow: How to Run the Experiments
+## Input data
 
-The notebooks are designed to be run top-to-bottom with minimal setup. At a high level, you choose which dataset to use, run the experiment notebooks to generate selection histories, and then run the summary pipeline to aggregate results and produce the final visualizations.
+- **Data** lives in `Data/` (e.g. `D1.xlsx`, `D2.xlsx`).
+- Each Excel file must contain columns that can be mapped to: `tc_id`, `us_id`, `tc_executiontime`, `us_businessvalue` (the pipeline converts Excel to CSV internally).
+- For D2, test execution data can be produced as described in `Data/generating_test_execution_data_for_D2.md`. The user story mappings to the test cases can be found [here](https://gitlab.com/SEMERU-Code-Public/Data/icse20-comet-data-replication-package/-/blob/main/LibEST/req_to_test_ground.txt?ref_type=heads).
 
-### 1. Choose and upload a dataset
+---
 
-1. Decide which instance you want to run:
-   - `mapped-dataset-124-40-defaultJS.xlsx`, or  
-   - `mapped-dataset-248-80-defaultJS.xlsx`.
-2. If you are using a hosted environment (e.g., Google Colab), upload the chosen file from `Data/` into the environment and ensure the notebook points to that filename/path.
+## Notebooks
 
-### 2. Run the non-history-aware RTSGA (SUKP formulation)
+| Notebook | Folder | Purpose |
+|---|---|---|
+| `Summary_Statistics_RTSGA.ipynb` | `RTSGA/` | Runs standard RTSGA over 20 cycles and produces the baseline summary file consumed by the other notebooks |
+| `RTSGA Code.ipynb` | `RTSGA/` | Runs the full GA experiment (V5_AG configuration) and compares results against the RTSGA baseline |
+| `Hist_RTSGA.ipynb` | `Hist-RTSGA/` | Runs the history-aware GA across a grid of BV-tolerance × starvation-weight settings with checkpointing |
+| `New_Reqs_Per_Cycle.ipynb` | `Hist-RTSGA/` | Reads the History_Tables output and builds a table of new requirements introduced each cycle |
 
-1. Open `RTSGA/RTSGA Code.ipynb`.
-2. Verify that the dataset path in the first few cells matches the file you want to use (124-40 or 248-80).
-3. Run all cells sequentially from top to bottom:
-   - The notebook reads the dataset.
-   - Executes the RTSGA algorithm over *K* cycles.
-   - Writes the selection history to the corresponding Excel file in `Results/`.
-   - Generates plots of business value, requirement coverage, and test coverage.
+---
 
-### 3. Run the history-aware RTS (Hist-RTSGA)
+## Running the Notebooks
 
-1. Open `Hist-RTSGA/Hist-RTSGA.ipynb`.
-2. Point it to the same dataset file you want to analyse and (optionally) to a prior selection history if you want to bootstrap.
-3. Run all cells sequentially from top to bottom:
-   - The notebook loads the dataset and (optionally) previous selection history.
-   - Applies the history-aware, business-value-driven RTS logic.
-   - Produces updated selection histories and BV / requirement / test coverage plots under varying **BV-tolerance** and **starvation-weight** settings.
+All notebooks are self-contained and **portable** — they run on local Jupyter or Google Colab without any manual path changes.
 
-### 4. Run the Summary Statistics Pipeline (new)
+### Environment detection
 
-1. Open `RTSGA/Summary_Statistics_RTSGA.ipynb`.
-2. Ensure the notebook is pointed at the selection history files you want to summarize (e.g., files in `Results/` such as `124-40_SelectionHist.xlsx`, `248-80_SelectionHist.xlsx`, or selection history outputs from BCPSO if available).
-3. Run all cells sequentially:
-   - The notebook parses selection histories from one or more experiment runs.
-   - Computes aggregated per-cycle metrics (business value aggregated over cycles, requirement/test coverage trends, tolerance/starvation parameter effects, etc.).
-   - Writes out `summary_statistics_RTW` files (CSV/XLSX as configured) into `Results/` or another specified output directory.
-   - Optionally generates combined visualizations or prepares the datasets for downstream plotting tools.
+Every notebook's first cell auto-detects the runtime and sets three path variables:
 
-After these steps, the selection histories, summary_statistics_RTW files, and visualization artifacts will be available for comparative analysis across RTSGA, Hist-RTSGA, and BCPSO runs.
+| Variable | Description |
+|---|---|
+| `DATA_FILE` | Absolute path to the datasets (`For example, mapped-dataset-36-20.xlsx`) |
+| `OUTPUT_DIR` | Directory where results, checkpoints, and reports are written |
+| `BASELINE_FILE` | Path to `summary_statistics_RTSGA_only_RTW_10%.xlsx` (RTSGA and Hist-RTSGA only) |
 
+**Local Jupyter** — no action needed. The setup cell walks up from the notebook's directory until it finds `Data/mapped-dataset-36-20.xlsx`, so the notebooks work regardless of where Jupyter was launched from.
 
-<!-- small edit -->
+**Google Colab** — upload the project to Google Drive, then set `DRIVE_PROJECT_PATH` in Cell 0 / Cell 1 to the folder that contains `Data/`. A file-upload fallback is available if Drive mount fails.
+
+### Recommended run order
+
+The notebooks have the following data dependency:
+
+```
+1. Summary_Statistics_RTSGA.ipynb   →  produces summary_statistics_RTSGA_only_RTW_10%.xlsx
+         ↓                                        ↓
+2. RTSGA Code.ipynb              Hist_RTSGA.ipynb   (both consume the baseline)
+                                         ↓
+                              3. New_Reqs_Per_Cycle.ipynb   (consumes History_Tables/)
+```
+
+#### Step 1 — Generate the RTSGA baseline
+
+Open `RTSGA/Summary_Statistics_RTSGA.ipynb` and run all cells. This executes 20 cycles of standard RTSGA (30 runs each) and writes `summary_statistics_RTSGA_only_RTW_10%.xlsx` to `RTSGA/`. This file is required by steps 2a and 2b.
+
+#### Step 2a — Run the GA experiment (RTSGA Code)
+
+Open `RTSGA/RTSGA Code.ipynb` and run all cells. This runs the V5_AG GA configuration and produces a `Comprehensive_Report_<version>.xlsx` report with plots comparing the run against the RTSGA baseline.
+
+#### Step 2b — Run the history-aware experiment (Hist-RTSGA)
+
+Open `Hist-RTSGA/Hist_RTSGA.ipynb` and run all cells. This sweeps over 15 combinations of BV-tolerance (`0.7, 0.8, 0.9`) and starvation weight (`0.05 – 0.25`) across 20 cycles × 30 runs each. Results are checkpointed after every configuration so the notebook can be safely interrupted and resumed.
+
+Outputs written to `Hist-RTSGA/`:
+
+| Directory | Contents |
+|---|---|
+| `Checkpoints/` | `.pkl` files — one per configuration, enable resume-on-interrupt |
+| `History_Tables/` | Per-configuration and combined selection history Excel files |
+| `Statistics/` | Per-configuration and combined summary statistics Excel files |
+| `Comparison_Plots/` | PNG plots and a combined PDF comparing Hist-RTSGA vs RTSGA vs random |
+
+#### Step 3 — Analyze new requirements per cycle
+
+Open `Hist-RTSGA/New_Reqs_Per_Cycle.ipynb` and run all cells. It reads `History_Tables/selection_history_ALL_COMBINED.xlsx` (produced in step 2b) and outputs a table showing how many new requirement IDs appear in each cycle relative to the previous one, saved to `new_requirements_per_cycle.xlsx`.
+
+---
+
+## Key Parameters
+
+These are defined at the top of each notebook and can be adjusted before running:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `NUM_CYCLES` | 20 | Number of regression test cycles to simulate |
+| `RUNS_PER_CYCLE` | 30 | Independent GA runs per cycle (for statistical robustness) |
+| `RTW_RATIOS` | `[0.1]` | Regression Testing Window as a fraction of total execution time |
+| `max_generations` | 100 | GA generations per run |
+| `crossover_prob` | 0.08 (RTSGA Code) / 0.8 (others) | Crossover probability |
+| `mutation_prob` | 0.05 | Mutation probability |
+| `bv_tolerances` | `[0.9, 0.8, 0.7]` | Hist-RTSGA: minimum BV fraction to activate starvation bonus |
+| `starvation_weights` | `[0.05, 0.10, 0.15, 0.20, 0.25]` | Hist-RTSGA: strength of the starvation bonus |

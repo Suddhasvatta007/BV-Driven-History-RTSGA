@@ -1,0 +1,15 @@
+# ── macOS ──────────────────────────────────────────────────────────────────
+.DS_Store
+
+# ── Jupyter ────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ── Generated output directories (recreated when notebooks are run) ────────
+
+# Checkpoint pickle files ───────────────────────────────────────────────────
+**/Checkpoints/
