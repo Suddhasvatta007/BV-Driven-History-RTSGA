@@ -17,7 +17,6 @@ The core idea: frame regression test selection as a Set Union Knapsack Problem (
 ├── RTSGA/
 │   ├── RTSGA Code.ipynb             # GA experiment runner — single-budget, multi-run
 │   ├── Summary_Statistics_RTSGA.ipynb  # Generates the RTSGA baseline summary file
-│   ├── summary_statistics_RTSGA_only_RTW_10%.xlsx  # Pre-computed RTSGA baseline
 │   └── Algo.png                     # Algorithm diagram
 │
 ├── Hist-RTSGA/
