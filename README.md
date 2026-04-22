@@ -77,16 +77,6 @@ Every notebook's first cell auto-detects the runtime and sets three path variabl
 
 ### Recommended run order
 
-The notebooks have the following data dependency:
-
-```
-1. Summary_Statistics_RTSGA.ipynb   →  produces summary_statistics_RTSGA_only_RTW_10%.xlsx
-         ↓                                        ↓
-2. RTSGA Code.ipynb              Hist_RTSGA.ipynb   (both consume the baseline)
-                                         ↓
-                              3. New_Reqs_Per_Cycle.ipynb   (consumes History_Tables/)
-```
-
 #### Step 1 — Generate the RTSGA baseline
 
 Open `RTSGA/Summary_Statistics_RTSGA.ipynb` and run all cells. This executes 20 cycles of standard RTSGA (30 runs each) and writes `summary_statistics_RTSGA_only_RTW_10%.xlsx` to `RTSGA/`. This file is required by steps 2a and 2b.
